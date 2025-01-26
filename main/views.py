@@ -3,7 +3,7 @@ import datetime
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 from main.forms import LoginForm, AddSnippetForm
@@ -20,6 +20,8 @@ def get_base_context(request, pagename):
 
 def index_page(request):
     context = get_base_context(request, 'PythonBin')
+    if "yes" in request.GET:
+        return HttpResponseRedirect(f"/snippets/{request.GET["id"]}")
     return render(request, 'pages/index.html', context)
 
 
