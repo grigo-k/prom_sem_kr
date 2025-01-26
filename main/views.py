@@ -27,12 +27,21 @@ def add_snippet_page(request):
     context = get_base_context(request, 'Добавление нового сниппета')
     if request.method == 'POST':
         addform = AddSnippetForm(request.POST)
+
         if addform.is_valid():
-            record = Snippet(
-                name=addform.data['name'],
-                code=addform.data['code'],
-                creation_date=datetime.datetime.now(),
-            )
+            if request.user.is_authenticated:
+                record = Snippet(
+                    user=request.user,
+                    name=addform.data['name'],
+                    code=addform.data['code'],
+                    creation_date=datetime.datetime.now(),
+                )
+            else:
+                record = Snippet(
+                    name=addform.data['name'],
+                    code=addform.data['code'],
+                    creation_date=datetime.datetime.now(),
+                )
             record.save()
             id = record.id
             messages.add_message(request, messages.SUCCESS, "Сниппет успешно добавлен")
@@ -43,7 +52,7 @@ def add_snippet_page(request):
     else:
         context['addform'] = AddSnippetForm(
             initial={
-                'user': 'AnonymousUser',
+                'user': request.user,
             }
         )
     return render(request, 'pages/add_snippet.html', context)
@@ -53,13 +62,22 @@ def view_snippet_page(request, id):
     context = get_base_context(request, 'Просмотр сниппета')
     try:
         record = Snippet.objects.get(id=id)
-        context['addform'] = AddSnippetForm(
-            initial={
-                'user': 'AnonymousUser',
-                'name': record.name,
-                'code': record.code,
-            }
-        )
+        if record.user != None:
+            context['addform'] = AddSnippetForm(
+                initial={
+                    'user': record.user,
+                    'name': record.name,
+                    'code': record.code,
+                }
+            )
+        else:
+            context['addform'] = AddSnippetForm(
+                initial={
+                    'user': 'AnonymousUser',
+                    'name': record.name,
+                    'code': record.code,
+                }
+            )
     except Snippet.DoesNotExist:
         raise Http404
     return render(request, 'pages/view_snippet.html', context)
